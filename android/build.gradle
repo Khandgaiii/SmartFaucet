@@ -1,0 +1,52 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+plugins {
+    id 'com.google.gms.google-services' version '4.4.4' apply false
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Capacitor 8 defaults to Java 21; many machines only have JDK 17 (Android Studio bundled).
+// Align all Android modules to 17 so `cap run android` works without installing JDK 21.
+// Also force Kotlin JVM target to 17 (e.g. @capacitor-community/bluetooth-le uses JVM 21 by default).
+subprojects { subproject ->
+    subproject.afterEvaluate {
+        def androidExt = subproject.extensions.findByName("android")
+        if (androidExt != null) {
+            androidExt.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+        subproject.tasks.configureEach { task ->
+            if (task.class.name.contains("KotlinCompile") && task.hasProperty("kotlinOptions")) {
+                task.kotlinOptions.jvmTarget = "17"
+            }
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
